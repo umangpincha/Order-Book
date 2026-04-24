@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Order Book</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #0f0f0f;
+      --cream: #faf7f2;
+      --saffron: #e8600a;
+      --saffron-light: #fff0e6;
+      --gold: #c89a2e;
+      --border: #d9d2c5;
+      --muted: #7a7060;
+      --white: #ffffff;
+      --section-bg: #1a1a1a;
+      --row-alt: #f5f1eb;
+      --green: #1d7a4f;
+      --red: #c0392b;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      background: var(--ink);
+      color: var(--white);
+      padding: 16px 20px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    header .brand {
+      display: flex;
+      flex-direction: column;
+    }
+    header .brand-name {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--white);
+      line-height: 1;
+    }
+    header .brand-sub {
+      font-size: 10px;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    header .header-badge {
+      background: var(--saffron);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── FORM CARD ─── */
+    .form-card {
+      background: var(--white);
+      margin: 16px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .form-card-header {
+      background: var(--saffron);
+      color: white;
+      padding: 12px 16px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-card-header .icon { font-size: 16px; }
+    .form-card-body { padding: 16px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .field-row.single { grid-template-columns: 1fr; }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .field label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .field input, .field textarea {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--cream);
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .field input:focus, .field textarea:focus {
+      border-color: var(--saffron);
+      background: white;
+    }
+    .field textarea { resize: vertical; min-height: 60px; }
+
+    /* ─── SECTION ─── */
+    .section-card {
+      margin: 0 16px 16px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: white;
+    }
+    .section-header {
+      background: var(--section-bg);
+      color: white;
+      padding: 11px 16px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .section-table { width: 100%; border-collapse: collapse; }
+    .section-table thead th {
+      background: #f0ede8;
+      padding: 8px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-table tbody tr {
+      border-bottom: 1px solid #ede8e0;
+      transition: background 0.15s;
+    }
+    .section-table tbody tr:last-child { border-bottom: none; }
+    .section-table tbody tr:nth-child(even) { background: var(--row-alt); }
+    .section-table tbody td {
+      padding: 10px 12px;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    .section-table tbody td:first-child {
+      color: var(--muted);
+      font-size: 11px;
+      width: 28px;
+    }
+    .section-table tbody td:last-child {
+      text-align: right;
+      width: 80px;
+    }
+
+    /* quantity input */
+    .qty-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0;
+      background: var(--cream);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      width: 90px;
+    }
+    .qty-btn {
+      background: none;
+      border: none;
+      width: 28px;
+      height: 32px;
+      font-size: 16px;
+      color: var(--saffron);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 700;
+      user-select: none;
+    }
+    .qty-btn:active { background: var(--saffron-light); }
+    .qty-input {
+      border: none;
+      background: transparent;
+      width: 32px;
+      text-align: center;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      color: var(--ink);
+      outline: none;
+      padding: 0;
+    }
+    .qty-input::-webkit-inner-spin-button,
+    .qty-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    /* remark field */
+    .remark-row {
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: #fdf9f5;
+    }
+    .remark-row label {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .remark-row input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      background: white;
+      outline: none;
+    }
+    .remark-row input:focus { border-color: var(--saffron); }
+
+    /* ─── TOTAL BAR ─── */
+    .total-bar {
+      margin: 0 16px 16px;
+      background: var(--ink);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: white;
+    }
+    .total-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .total-value {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    /* ─── ACTION BUTTONS ─── */
+    .actions {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      z-index: 200;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+    }
+    .btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 10px 6px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn .btn-icon { font-size: 20px; }
+    .btn-pdf { background: var(--saffron); color: white; }
+    .btn-wa { background: #25D366; color: white; }
+    .btn-reset { background: var(--red); color: white; }
+
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 500;
+      align-items: flex-end;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 24px 24px 0 0;
+      padding: 20px;
+      width: 100%;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .modal-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--ink);
+    }
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .modal p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    /* toast */
+    .toast {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 24px;
+      font-size: 13px;
+      z-index: 999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    /* print hidden */
+    @media print { .actions, header { display: none; } body { padding: 0; } }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="brand">
+    <!-- INLINE SVG LOGO -->
+    <svg width="148" height="38" viewBox="0 0 148 38" xmlns="http://www.w3.org/2000/svg">
+      <!-- Clipboard icon -->
+      <rect x="0" y="4" width="28" height="34" rx="4" fill="#1a1a1a" stroke="#2e2e2e" stroke-width="1"/>
+      <rect x="8" y="2" width="12" height="6" rx="3" fill="#e8600a"/>
+      <line x1="4" y1="16" x2="24" y2="16" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="4" y1="21" x2="22" y2="21" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="4" y1="26" x2="23" y2="26" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="4" y1="31" x2="20" y2="31" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Saffron accent bar top of clipboard -->
+      <rect x="0" y="4" width="28" height="3" rx="2" fill="#e8600a"/>
+      <!-- Wordmark -->
+      <text x="35" y="15" font-family="Georgia,serif" font-size="8" font-weight="700" fill="#c89a2e" letter-spacing="2">ORDER</text>
+      <text x="34" y="32" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#ffffff" letter-spacing="1">BOOK</text>
+      <!-- Gold underline accent -->
+      <rect x="35" y="35" width="110" height="1.5" rx="1" fill="#e8600a" opacity="0.5"/>
+    </svg>
+  </div>
+  <div class="header-badge" id="live-total">QTY: 0</div>
+</header>
+
+<!-- ORDER DETAILS -->
+<!-- LOGO BANNER -->
+<div style="margin:16px 16px 0;background:#0f0f0f;border-radius:16px;overflow:hidden;border:1px solid #2e2e2e;">
+  <svg width="100%" viewBox="0 0 340 90" xmlns="http://www.w3.org/2000/svg">
+    <rect x="0" y="0" width="340" height="4" fill="#e8600a"/>
+    <line x1="0" y1="30" x2="340" y2="30" stroke="#1e1e1e" stroke-width="1"/>
+    <line x1="0" y1="60" x2="340" y2="60" stroke="#1e1e1e" stroke-width="1"/>
+    <line x1="170" y1="0" x2="170" y2="90" stroke="#1a1a1a" stroke-width="1"/>
+    <rect x="20" y="16" width="38" height="58" rx="5" fill="#1a1a1a" stroke="#2e2e2e" stroke-width="1.2"/>
+    <rect x="30" y="12" width="18" height="9" rx="4.5" fill="#e8600a"/>
+    <rect x="20" y="16" width="38" height="5" rx="2" fill="#e8600a"/>
+    <line x1="26" y1="37" x2="52" y2="37" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+    <line x1="26" y1="46" x2="50" y2="46" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+    <line x1="26" y1="55" x2="51" y2="55" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+    <line x1="26" y1="64" x2="48" y2="64" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+    <text x="74" y="36" font-family="Georgia,serif" font-size="11" font-weight="700" fill="#c89a2e" letter-spacing="4">ORDER</text>
+    <text x="72" y="68" font-family="Georgia,serif" font-size="36" font-weight="700" fill="#ffffff" letter-spacing="2">BOOK</text>
+    <rect x="158" y="20" width="1" height="50" fill="#2e2e2e"/>
+    <text x="178" y="34" font-family="Arial,sans-serif" font-size="9" fill="#7a7060" letter-spacing="3">FIELD SALES ENTRY</text>
+    <circle cx="178" cy="50" r="2.5" fill="#e8600a" opacity="0.9"/>
+    <circle cx="188" cy="50" r="2.5" fill="#c89a2e" opacity="0.7"/>
+    <circle cx="198" cy="50" r="2.5" fill="#e8600a" opacity="0.5"/>
+    <circle cx="208" cy="50" r="3" fill="#e8600a"/>
+    <circle cx="218" cy="50" r="2.5" fill="#e8600a" opacity="0.5"/>
+    <circle cx="228" cy="50" r="2.5" fill="#c89a2e" opacity="0.7"/>
+    <circle cx="238" cy="50" r="2.5" fill="#e8600a" opacity="0.9"/>
+    <rect x="178" y="62" width="80" height="16" rx="8" fill="#e8600a"/>
+    <text x="218" y="74" font-family="Arial,sans-serif" font-size="8" fill="white" text-anchor="middle" font-weight="700" letter-spacing="1">GROSS QTY · —</text>
+    <line x1="4" y1="18" x2="4" y2="8" stroke="#c89a2e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="4" y1="8" x2="14" y2="8" stroke="#c89a2e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="336" y1="18" x2="336" y2="8" stroke="#c89a2e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="336" y1="8" x2="326" y2="8" stroke="#c89a2e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="4" y1="72" x2="4" y2="82" stroke="#c89a2e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="4" y1="82" x2="14" y2="82" stroke="#c89a2e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="336" y1="72" x2="336" y2="82" stroke="#c89a2e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="336" y1="82" x2="326" y2="82" stroke="#c89a2e" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<div class="form-card">
+  <div class="form-card-header"><span class="icon">🏪</span> Order Details</div>
+  <div class="form-card-body">
+    <div class="field-row">
+      <div class="field">
+        <label>Order By</label>
+        <input type="text" id="orderBy" placeholder="Party / Shop name" />
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="orderDate" />
+      </div>
+    </div>
+    <div class="field-row single">
+      <div class="field">
+        <label>Transport Name</label>
+        <input type="text" id="transport" placeholder="Transport / vehicle" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTIONS generated by JS -->
+<div id="sections-container"></div>
+
+<!-- TOTAL -->
+<div class="total-bar">
+  <div>
+    <div class="total-label">Gross Total Qty</div>
+    <div class="total-value" id="grand-total">0</div>
+  </div>
+  <div style="text-align:right">
+    <div class="total-label">Items Filled</div>
+    <div class="total-value" id="items-filled" style="font-size:20px;color:#ccc;">0</div>
+  </div>
+</div>
+
+<!-- ACTIONS (fixed footer) -->
+<div class="actions">
+  <button class="btn btn-pdf" onclick="exportPDF()">
+    <span class="btn-icon">📄</span>Export PDF
+  </button>
+  <button class="btn btn-wa" onclick="shareWhatsApp()">
+    <span class="btn-icon">💬</span>Share WA
+  </button>
+  <button class="btn btn-reset" onclick="confirmReset()">
+    <span class="btn-icon">🗑️</span>Clear All
+  </button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- RESET MODAL -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Clear All Entries?</div>
+    <p>This will erase all quantities you've entered. Order details (name, date, transport) will be kept.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px">
+      <button onclick="closeModal()" style="padding:12px;border-radius:10px;border:1.5px solid #ddd;background:white;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Cancel</button>
+      <button onclick="doReset()" style="padding:12px;border-radius:10px;border:none;background:#c0392b;color:white;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Yes, Clear</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── PRODUCT DATA (from ORDER_BOOK_ONLINE.xlsx) ───────────────────────────
+const SECTIONS = [
+  {
+    id: 'rs5',
+    title: 'Rs. 5 / Bori 16g',
+    items: [
+      { code: 'KPB',  name: 'Kanpuri Mix Bhujia' },
+      { code: 'AB',   name: 'Aloo Bhujia' },
+      { code: 'DAL',  name: 'Dal Bhujia' },
+      { code: 'BB',   name: 'Bikaneri Bhujia' },
+      { code: 'TASTY',name: 'Tasty Nut' },
+      { code: 'NAV',  name: 'Navratan Mix' },
+      { code: 'NM',   name: 'Namkeen Mix' },
+      { code: 'PS',   name: 'Plain Sev' },
+    ]
+  },
+  {
+    id: 'rs10',
+    title: 'Rs. 10 / Bori 30g',
+    items: [
+      { code: 'KPB',  name: 'Kanpuri Mix Bhujia' },
+      { code: 'AB',   name: 'Aloo Bhujia' },
+      { code: 'DAL',  name: 'Dal Bhujia' },
+      { code: 'BB',   name: 'Bikaneri Bhujia' },
+      { code: 'KP',   name: 'Kaju Pista' },
+      { code: 'NAV',  name: 'Navratan Mix' },
+      { code: 'NM',   name: 'Namkeen Mix' },
+      { code: 'KM',   name: 'Khatta Meetha' },
+      { code: 'SP',   name: 'Special Mix' },
+      { code: 'LD',   name: 'Laung Danda' },
+    ]
+  },
+  {
+    id: 'rs20',
+    title: 'Rs. 20 / Bori',
+    items: [
+      { code: 'KPB',  name: 'Kanpuri Mix Bhujia' },
+      { code: 'BB',   name: 'Bikaneri Bhujia' },
+    ]
+  },
+  {
+    id: 'g120',
+    title: 'Item 120g Box',
+    items: [
+      { code: 'KPB',   name: 'Kanpuri Mix Bhujia' },
+      { code: 'BP',    name: 'Bhakarwadi Plain' },
+      { code: 'MBOO',  name: 'Mini Boondi' },
+      { code: 'BB',    name: 'Bikaneri Bhujia' },
+      { code: 'PLAIN', name: 'Plain Boondi' },
+      { code: 'KM',    name: 'Khatta Meetha' },
+    ]
+  },
+  {
+    id: 'g300',
+    title: '300g / 330g / 400g Box',
+    items: [
+      { code: 'KPB',   name: 'Kanpuri Mix Bhujia' },
+      { code: 'DAL',   name: 'Dal Bhujia' },
+      { code: 'PLAIN', name: 'Plain Boondi' },
+      { code: 'SCOKT', name: 'Scokt Mix' },
+      { code: 'SLX',   name: 'SLX Mix' },
+      { code: 'KP',    name: 'Kaju Pista' },
+      { code: 'BB',    name: 'Bikaneri Bhujia' },
+      { code: 'DIET',  name: 'Diet Mix 400g' },
+    ]
+  },
+  {
+    id: 'party',
+    title: 'Party Pack',
+    items: [
+      { code: 'SLX',   name: 'SLX Mix' },
+      { code: 'SLX1K', name: 'SLX Mix 1Kg' },
+      { code: 'BB',    name: 'Bikaneri Bhujia' },
+      { code: 'BB1K',  name: 'Bikaneri Bhujia 1Kg' },
+      { code: 'AB',    name: 'Aloo Bhujia' },
+      { code: 'AB1K',  name: 'Aloo Bhujia 1Kg' },
+    ]
+  }
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────
+let state = {};
+SECTIONS.forEach(sec => {
+  state[sec.id] = { items: {}, remark: '' };
+  sec.items.forEach(item => { state[sec.id].items[item.code] = ''; });
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+document.getElementById('orderDate').value = new Date().toISOString().split('T')[0];
+loadFromStorage();
+renderSections();
+
+function renderSections() {
+  const container = document.getElementById('sections-container');
+  container.innerHTML = '';
+  SECTIONS.forEach(sec => {
+    const div = document.createElement('div');
+    div.className = 'section-card';
+    div.innerHTML = `
+      <div class="section-header">${sec.title}</div>
+      <table class="section-table">
+        <thead><tr><th>#</th><th>Item</th><th style="text-align:right">Qty</th></tr></thead>
+        <tbody>
+          ${sec.items.map((item, i) => `
+            <tr>
+              <td>${i+1}</td>
+              <td><strong>${item.code}</strong><br><span style="color:#888;font-size:11px">${item.name}</span></td>
+              <td>
+                <div class="qty-wrap">
+                  <button class="qty-btn" onclick="changeQty('${sec.id}','${item.code}',-0.5)">−</button>
+                  <input class="qty-input" type="number" min="0" step="0.5"
+                    id="qty-${sec.id}-${item.code}"
+                    value="${state[sec.id].items[item.code]}"
+                    oninput="onQtyInput('${sec.id}','${item.code}',this.value)"
+                    onchange="onQtyChange('${sec.id}','${item.code}',this.value)"
+                  />
+                  <button class="qty-btn" onclick="changeQty('${sec.id}','${item.code}',0.5)">+</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div class="remark-row">
+        <label>Remark for this section</label>
+        <input type="text" id="remark-${sec.id}" placeholder="Optional note..."
+          value="${state[sec.id].remark}"
+          oninput="onRemark('${sec.id}',this.value)" />
+      </div>
+    `;
+    container.appendChild(div);
+  });
+  updateTotals();
+}
+
+function changeQty(secId, code, delta) {
+  let cur = parseFloat(state[secId].items[code]) || 0;
+  cur = Math.max(0, Math.round((cur + delta) * 10) / 10);
+  state[secId].items[code] = cur > 0 ? cur : '';
+  const el = document.getElementById(`qty-${secId}-${code}`);
+  if (el) el.value = state[secId].items[code];
+  updateTotals();
+  saveToStorage();
+}
+
+function onQtyInput(secId, code, val) {
+  state[secId].items[code] = val;
+  updateTotals();
+}
+function onQtyChange(secId, code, val) {
+  const n = parseFloat(val);
+  state[secId].items[code] = (!isNaN(n) && n > 0) ? n : '';
+  const el = document.getElementById(`qty-${secId}-${code}`);
+  if (el) el.value = state[secId].items[code];
+  updateTotals();
+  saveToStorage();
+}
+function onRemark(secId, val) {
+  state[secId].remark = val;
+  saveToStorage();
+}
+
+function updateTotals() {
+  let total = 0, filled = 0;
+  SECTIONS.forEach(sec => {
+    sec.items.forEach(item => {
+      const v = parseFloat(state[sec.id].items[item.code]) || 0;
+      if (v > 0) { total += v; filled++; }
+    });
+  });
+  total = Math.round(total * 100) / 100;
+  document.getElementById('grand-total').textContent = total;
+  document.getElementById('items-filled').textContent = filled;
+  document.getElementById('live-total').textContent = `QTY: ${total}`;
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────
+function saveToStorage() {
+  try {
+    localStorage.setItem('orderbook_state', JSON.stringify(state));
+    localStorage.setItem('orderbook_meta', JSON.stringify({
+      orderBy: document.getElementById('orderBy').value,
+      orderDate: document.getElementById('orderDate').value,
+      transport: document.getElementById('transport').value,
+    }));
+  } catch(e) {}
+}
+function loadFromStorage() {
+  try {
+    const s = localStorage.getItem('orderbook_state');
+    if (s) state = JSON.parse(s);
+    const m = localStorage.getItem('orderbook_meta');
+    if (m) {
+      const meta = JSON.parse(m);
+      document.getElementById('orderBy').value = meta.orderBy || '';
+      document.getElementById('orderDate').value = meta.orderDate || new Date().toISOString().split('T')[0];
+      document.getElementById('transport').value = meta.transport || '';
+    }
+  } catch(e) {}
+}
+document.getElementById('orderBy').addEventListener('input', saveToStorage);
+document.getElementById('orderDate').addEventListener('change', saveToStorage);
+document.getElementById('transport').addEventListener('input', saveToStorage);
+
+// ─── RESET ────────────────────────────────────────────────────────────────
+function confirmReset() {
+  document.getElementById('resetModal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('resetModal').classList.remove('show');
+}
+function doReset() {
+  SECTIONS.forEach(sec => {
+    state[sec.id] = { items: {}, remark: '' };
+    sec.items.forEach(item => { state[sec.id].items[item.code] = ''; });
+  });
+  renderSections();
+  saveToStorage();
+  closeModal();
+  toast('All quantities cleared!');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ─── PDF GENERATION ──────────────────────────────────────────────────────
+function buildPDFData() {
+  const orderBy = document.getElementById('orderBy').value || '—';
+  const orderDate = document.getElementById('orderDate').value || '—';
+  const transport = document.getElementById('transport').value || '—';
+  let grossQty = 0;
+  const sections = [];
+  SECTIONS.forEach(sec => {
+    const rows = [];
+    sec.items.forEach(item => {
+      const v = parseFloat(state[sec.id].items[item.code]) || 0;
+      if (v > 0) { rows.push({ code: item.code, name: item.name, qty: v }); grossQty += v; }
+    });
+    sections.push({ title: sec.title, rows, remark: state[sec.id].remark });
+  });
+  grossQty = Math.round(grossQty * 100) / 100;
+  return { orderBy, orderDate, transport, grossQty, sections };
+}
+
+function exportPDF() {
+  const data = buildPDFData();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const PW = 210, ML = 14, MR = 14, CW = PW - ML - MR;
+  let y = 0;
+
+  function newPage() {
+    doc.addPage();
+    y = 10;
+    drawPageHeader();
+  }
+  function checkY(needed) { if (y + needed > 275) { newPage(); } }
+
+  // ── HEADER BLOCK ──
+  function drawPageHeader() {
+    // Top stripe
+    doc.setFillColor(15, 15, 15);
+    doc.rect(0, 0, PW, 22, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255);
+    doc.text('ORDER BOOK', ML, 10);
+    doc.setFontSize(7);
+    doc.setTextColor(200, 154, 46);
+    doc.text('FIELD SALES ENTRY', ML, 15);
+    // right side
+    doc.setFontSize(9);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`Date: ${data.orderDate}`, PW - MR, 9, { align: 'right' });
+    doc.text(`QTY: ${data.grossQty}`, PW - MR, 16, { align: 'right' });
+    y = 28;
+  }
+
+  drawPageHeader();
+
+  // ── META INFO BOX ──
+  doc.setFillColor(250, 247, 242);
+  doc.roundedRect(ML, y, CW, 22, 3, 3, 'F');
+  doc.setDrawColor(217, 210, 197);
+  doc.roundedRect(ML, y, CW, 22, 3, 3, 'S');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(122, 112, 96);
+  doc.text('ORDER BY', ML + 5, y + 7);
+  doc.text('DATE', ML + CW * 0.45, y + 7);
+  doc.text('TRANSPORT', ML + CW * 0.7, y + 7);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(15, 15, 15);
+  doc.text(data.orderBy, ML + 5, y + 17);
+  doc.text(data.orderDate, ML + CW * 0.45, y + 17);
+  doc.text(data.transport, ML + CW * 0.7, y + 17);
+  y += 28;
+
+  // ── SECTIONS ──
+  data.sections.forEach(sec => {
+    if (!sec.rows.length && !sec.remark) return;
+    checkY(14);
+
+    // Section header
+    doc.setFillColor(26, 26, 26);
+    doc.roundedRect(ML, y, CW, 9, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(255, 255, 255);
+    doc.text(sec.title.toUpperCase(), ML + 5, y + 6.2);
+    y += 11;
+
+    if (sec.rows.length) {
+      // col headers
+      checkY(8);
+      doc.setFillColor(240, 237, 232);
+      doc.rect(ML, y, CW, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(122, 112, 96);
+      doc.text('S.NO', ML + 3, y + 5);
+      doc.text('ITEM NAME', ML + 16, y + 5);
+      doc.text('QTY', PW - MR - 3, y + 5, { align: 'right' });
+      y += 7;
+
+      sec.rows.forEach((row, i) => {
+        checkY(9);
+        if (i % 2 === 1) {
+          doc.setFillColor(245, 241, 235);
+          doc.rect(ML, y, CW, 9, 'F');
+        }
+        doc.setDrawColor(237, 232, 224);
+        doc.line(ML, y + 9, ML + CW, y + 9);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(60, 60, 60);
+        doc.text(String(i + 1), ML + 3, y + 6);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(15, 15, 15);
+        doc.text(`${row.code} - ${row.name}`, ML + 16, y + 6.2);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(232, 96, 10);
+        doc.text(String(row.qty), PW - MR - 3, y + 6.5, { align: 'right' });
+        y += 9;
+      });
+    } else {
+      checkY(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.setTextColor(180, 170, 160);
+      doc.text('No items ordered in this category', ML + 5, y + 5);
+      y += 8;
+    }
+
+    // remark
+    if (sec.remark) {
+      checkY(10);
+      doc.setFillColor(255, 248, 240);
+      doc.rect(ML, y, CW, 9, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(200, 130, 50);
+      doc.text('REMARK:', ML + 4, y + 6);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(60, 60, 60);
+      doc.text(sec.remark, ML + 25, y + 6);
+      y += 10;
+    }
+    y += 5;
+  });
+
+  // ── GROSS TOTAL ──
+  checkY(18);
+  doc.setFillColor(15, 15, 15);
+  doc.roundedRect(ML, y, CW, 14, 3, 3, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(170, 170, 170);
+  doc.text('GROSS TOTAL QTY', ML + 8, y + 9);
+  doc.setFontSize(16);
+  doc.setTextColor(200, 154, 46);
+  doc.text(String(data.grossQty), PW - MR - 5, y + 10, { align: 'right' });
+  y += 20;
+
+  // ── FOOTER ──
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(180, 170, 160);
+    doc.text(`Page ${p} of ${totalPages}  |  Generated by Order Book App`, PW / 2, 290, { align: 'center' });
+  }
+
+  return doc;
+}
+
+async function exportPDF() {
+  toast('Generating PDF…');
+  setTimeout(() => {
+    try {
+      const doc = exportPDF_inner();
+      const orderBy = document.getElementById('orderBy').value || 'order';
+      const date = document.getElementById('orderDate').value || 'date';
+      doc.save(`OrderBook_${orderBy}_${date}.pdf`);
+      toast('PDF downloaded!');
+    } catch(e) { toast('Error generating PDF'); console.error(e); }
+  }, 100);
+}
+// rename to avoid conflict
+function exportPDF_inner() { return buildPDF(); }
+
+function buildPDF() {
+  const data = buildPDFData();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const PW = 210, ML = 14, MR = 14, CW = PW - ML - MR;
+  let y = 0;
+
+  function checkY(needed) {
+    if (y + needed > 275) {
+      doc.addPage();
+      y = 10;
+      drawHeader();
+    }
+  }
+
+  function drawHeader() {
+    doc.setFillColor(15, 15, 15);
+    doc.rect(0, 0, PW, 22, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(255, 255, 255);
+    doc.text('ORDER BOOK', ML, 10);
+    doc.setFontSize(7);
+    doc.setTextColor(200, 154, 46);
+    doc.text('FIELD SALES ENTRY', ML, 15);
+    doc.setFontSize(9);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`Date: ${data.orderDate}`, PW - MR, 9, { align: 'right' });
+    doc.text(`GROSS QTY: ${data.grossQty}`, PW - MR, 16, { align: 'right' });
+    y = 28;
+  }
+
+  drawHeader();
+
+  // meta box
+  doc.setFillColor(250, 247, 242);
+  doc.roundedRect(ML, y, CW, 22, 3, 3, 'F');
+  doc.setDrawColor(217, 210, 197);
+  doc.roundedRect(ML, y, CW, 22, 3, 3, 'S');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(122, 112, 96);
+  doc.text('ORDER BY', ML + 5, y + 6);
+  doc.text('DATE', ML + 80, y + 6);
+  doc.text('TRANSPORT', ML + 125, y + 6);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(15, 15, 15);
+  const truncate = (s, n) => s.length > n ? s.substring(0, n) + '…' : s;
+  doc.text(truncate(data.orderBy, 25), ML + 5, y + 16);
+  doc.text(data.orderDate, ML + 80, y + 16);
+  doc.text(truncate(data.transport, 20), ML + 125, y + 16);
+  y += 28;
+
+  data.sections.forEach(sec => {
+    if (!sec.rows.length && !sec.remark) return;
+    checkY(14);
+
+    // section heading
+    doc.setFillColor(26, 26, 26);
+    doc.roundedRect(ML, y, CW, 9, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(255, 255, 255);
+    doc.text(sec.title.toUpperCase(), ML + 5, y + 6.2);
+    y += 11;
+
+    if (sec.rows.length) {
+      checkY(8);
+      doc.setFillColor(240, 237, 232);
+      doc.rect(ML, y, CW, 7, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(122, 112, 96);
+      doc.text('S.NO', ML + 3, y + 5);
+      doc.text('ITEM NAME', ML + 16, y + 5);
+      doc.text('QTY', PW - MR - 3, y + 5, { align: 'right' });
+      y += 7;
+
+      sec.rows.forEach((row, i) => {
+        checkY(9);
+        if (i % 2 === 1) {
+          doc.setFillColor(245, 241, 235);
+          doc.rect(ML, y, CW, 9, 'F');
+        }
+        doc.setDrawColor(237, 232, 224);
+        doc.line(ML, y + 9, ML + CW, y + 9);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(80, 80, 80);
+        doc.text(String(i + 1), ML + 3, y + 6);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(15, 15, 15);
+        doc.text(`${row.code} – ${row.name}`, ML + 16, y + 6.2);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(232, 96, 10);
+        doc.text(String(row.qty), PW - MR - 3, y + 6.5, { align: 'right' });
+        y += 9;
+      });
+    } else {
+      checkY(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.setTextColor(180, 170, 160);
+      doc.text('No items ordered in this category', ML + 5, y + 5);
+      y += 8;
+    }
+
+    if (sec.remark) {
+      checkY(10);
+      doc.setFillColor(255, 248, 240);
+      doc.rect(ML, y, CW, 9, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(200, 130, 50);
+      doc.text('REMARK:', ML + 4, y + 6);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(60, 60, 60);
+      doc.text(sec.remark, ML + 25, y + 6);
+      y += 10;
+    }
+    y += 5;
+  });
+
+  checkY(18);
+  doc.setFillColor(15, 15, 15);
+  doc.roundedRect(ML, y, CW, 14, 3, 3, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(170, 170, 170);
+  doc.text('GROSS TOTAL QTY', ML + 8, y + 9);
+  doc.setFontSize(16);
+  doc.setTextColor(200, 154, 46);
+  doc.text(String(data.grossQty), PW - MR - 5, y + 10, { align: 'right' });
+
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(180, 170, 160);
+    doc.text(`Page ${p} of ${totalPages}  |  Order Book App`, PW / 2, 290, { align: 'center' });
+  }
+
+  return doc;
+}
+
+// ─── OVERRIDE exportPDF to use buildPDF ──────────────────────────────────
+window.exportPDF = function() {
+  toast('Generating PDF…');
+  setTimeout(() => {
+    try {
+      const doc = buildPDF();
+      const orderBy = (document.getElementById('orderBy').value || 'order').replace(/\s+/g,'_');
+      const date = document.getElementById('orderDate').value || 'today';
+      doc.save(`OrderBook_${orderBy}_${date}.pdf`);
+      toast('✅ PDF downloaded!');
+    } catch(e) { toast('❌ Error generating PDF'); console.error(e); }
+  }, 150);
+};
+
+// ─── WHATSAPP SHARE ──────────────────────────────────────────────────────
+window.shareWhatsApp = function() {
+  const data = buildPDFData();
+  if (!data.orderBy || data.orderBy === '—') {
+    toast('⚠️ Please enter Order By name first');
+    return;
+  }
+
+  // Try to generate PDF blob for sharing via Web Share API
+  try {
+    const doc = buildPDF();
+    const blob = doc.output('blob');
+    const file = new File([blob], `OrderBook_${data.orderBy}_${data.orderDate}.pdf`, { type: 'application/pdf' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        title: `Order Book – ${data.orderBy}`,
+        text: buildTextSummary(data),
+        files: [file]
+      }).then(() => toast('✅ Shared!')).catch(() => shareTextFallback(data));
+      return;
+    }
+  } catch(e) {}
+
+  shareTextFallback(data);
+};
+
+function buildTextSummary(data) {
+  let msg = `📋 *ORDER BOOK*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━\n`;
+  msg += `🏪 *Order By:* ${data.orderBy}\n`;
+  msg += `📅 *Date:* ${data.orderDate}\n`;
+  msg += `🚚 *Transport:* ${data.transport}\n`;
+  msg += `━━━━━━━━━━━━━━━━━━\n\n`;
+  data.sections.forEach(sec => {
+    if (!sec.rows.length) return;
+    msg += `*${sec.title}*\n`;
+    sec.rows.forEach((row, i) => {
+      msg += `  ${i+1}. ${row.code} – ${row.name}: *${row.qty}*\n`;
+    });
+    if (sec.remark) msg += `  📝 _${sec.remark}_\n`;
+    msg += '\n';
+  });
+  msg += `━━━━━━━━━━━━━━━━━━\n`;
+  msg += `📦 *GROSS QTY: ${data.grossQty}*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━`;
+  return msg;
+}
+
+function shareTextFallback(data) {
+  const msg = buildTextSummary(data);
+  const encoded = encodeURIComponent(msg);
+  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+}
+</script>
+</body>
+</html>
